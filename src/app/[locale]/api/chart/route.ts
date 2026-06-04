@@ -1,5 +1,4 @@
-import {  NextRequest } from 'next/server'
-import { sleep } from '@/utils';
+import {  NextRequest } from 'next/server';
 
 const boardList = [
     {
@@ -59,7 +58,6 @@ const boardList = [
 export async function GET(req: NextRequest) {
     const plainData: any[] = [];
     const asyncData:any[] = [];
-    const resultData: any[] = [];
     boardList.forEach(v => {
         if(v.data.type === 'fetch') {
             asyncData.push(v);
@@ -67,14 +65,13 @@ export async function GET(req: NextRequest) {
             plainData.push({...v, data: v.data.value});
         }
     });
-    asyncData.forEach(v => {
-        fetch(v.data.value).then(res => res.json()).then(res => {
-            resultData.push({...v, data: res})
-        })
-    });
+    const fetchPromises = asyncData.map(v => 
+        fetch(v.data.value)
+            .then(res => res.json())
+            .then(res => ({...v, data: res})
+    );
+    const fetchedData = await Promise.all(fetchPromises);
 
-    await sleep();
-
-    return Response.json({ data: [...plainData, ...resultData]})
+    return Response.json({ data: [...plainData, ...fetchedData]})
     
 }

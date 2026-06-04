@@ -17,14 +17,28 @@ import styles from './index.module.less';
 export default function Dashboard() {
   // const t = useTranslations();
   const boardContainerRef = useRef<any>();
+  const sortableRef = useRef<Sortable | null>(null);
 
   useEffect(() => {
-    setTimeout(() => {
-        const sortable = new Sortable(document.querySelector('#dashboard') as HTMLElement, {
+    const initSortable = () => {
+        const container = document.querySelector('#dashboard') as HTMLElement;
+        if (!container) {
+            requestAnimationFrame(initSortable);
+            return;
+        }
+        sortableRef.current = new Sortable(container, {
             handle: ".moveBtn"
-        })
-    }, 1000)
-   
+        });
+    };
+
+    initSortable();
+
+    return () => {
+        if (sortableRef.current) {
+            sortableRef.current.destroy();
+            sortableRef.current = null;
+        }
+    };
   }, [boardContainerRef])
 
   return (
