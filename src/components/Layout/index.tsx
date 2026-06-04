@@ -1,8 +1,8 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Layout, Menu, theme, Avatar, Dropdown, ConfigProvider, Badge, Popover, type MenuProps } from 'antd';
 import getNavList from './menu';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '../../navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import {
     BellOutlined,
@@ -12,6 +12,7 @@ import {
 } from '@ant-design/icons';
 import { getThemeBg } from '@/utils';
 import { Link, pathnames, usePathname } from '../../navigation';
+import { isAuthError } from '@/utils/req';
 import styles from './index.module.less';
 
 const { Header, Content, Footer, Sider } = Layout;
@@ -22,11 +23,7 @@ interface IProps {
     defaultOpen?: string[]
 }
 
-const onLogout = () => {
-    localStorage.removeItem("isDarkTheme")
-}
-
-const items: MenuProps['items'] = [
+const getMenuItems = (onLogout: () => void): MenuProps['items'] => [
     {
       key: '1',
       label: (
@@ -46,9 +43,9 @@ const items: MenuProps['items'] = [
     {
       key: '3',
       label: (
-        <a target="_blank" onClick={onLogout} rel="noopener noreferrer" href="/user/login">
+        <span onClick={onLogout} style={{ display: 'block', width: '100%' }}>
           退出登录
-        </a>
+        </span>
       ),
     },
   ];
@@ -74,6 +71,11 @@ const CommonLayout: React.FC<IProps> = ({ children, curActive, defaultOpen = ['/
         localStorage.setItem('isDarkTheme', _curTheme ? 'true' : '');
   }
 
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem("isDarkTheme");
+    router.push('/user/login');
+  }, [router]);
+
   const handleSelect = (row: {key: string}) => {
     if(row.key.includes('http')) {
       window.open(row.key)
@@ -86,6 +88,17 @@ const CommonLayout: React.FC<IProps> = ({ children, curActive, defaultOpen = ['/
       const isDark = !!localStorage.getItem("isDarkTheme");
       setCurTheme(isDark);
   }, []);
+
+  useEffect(() => {
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      if (isAuthError(event.reason)) {
+        event.preventDefault();
+        router.push('/user/login');
+      }
+    };
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    return () => window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+  }, [router]);
 
   return (
     <ConfigProvider
@@ -140,7 +153,7 @@ const CommonLayout: React.FC<IProps> = ({ children, curActive, defaultOpen = ['/
                             }
                         </span>
                         <div className={styles.avatar}>
-                        <Dropdown menu={{ items }} placement="bottomLeft" arrow>
+                        <Dropdown menu={{ items: getMenuItems(handleLogout) }} placement="bottomLeft" arrow>
                             <Avatar style={{color: '#fff', backgroundColor: colorTextBase}}>Admin</Avatar>
                         </Dropdown>
                         </div>

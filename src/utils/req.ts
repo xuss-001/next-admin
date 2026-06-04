@@ -1,6 +1,25 @@
 import axios from 'axios';
 import { message } from 'antd';
 
+export class AuthError extends Error {
+  constructor(message = '未授权，请重新登录') {
+    super(message);
+    this.name = 'AuthError';
+  }
+}
+
+export const isAuthError = (error: unknown): error is AuthError => {
+  return error instanceof AuthError;
+};
+
+export const getLoginPath = (): string => {
+  if (typeof window === 'undefined') return '/zh/user/login';
+  const pathname = window.location.pathname;
+  const segments = pathname.split('/').filter(Boolean);
+  const locale = segments[0] && ['en', 'zh'].includes(segments[0]) ? segments[0] : 'zh';
+  return `/${locale}/user/login`;
+};
+
 const instance = axios.create({
     baseURL: process.env.BASE_API_URL,
     timeout: 10000
@@ -21,13 +40,7 @@ instance.interceptors.request.use(function (config) {
     if(error && error.response) {
         switch(error.response.status) {
             case 401:
-                if (typeof window !== 'undefined') {
-                  const pathname = window.location.pathname;
-                  const segments = pathname.split('/').filter(Boolean);
-                  const locale = segments[0] && ['en', 'zh'].includes(segments[0]) ? segments[0] : 'zh';
-                  window.location.href = `/${locale}/user/login`;
-                }
-                break;
+                return Promise.reject(new AuthError());
             case 500:
               message.error(error.response.data?.msg || '服务器内部错误');
               break;
