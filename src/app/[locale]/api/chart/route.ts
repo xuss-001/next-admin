@@ -65,15 +65,18 @@ export async function GET(req: NextRequest) {
             plainData.push({...v, data: v.data.value});
         }
     });
-    const fetchPromises = asyncData.map(v => 
-        fetch(v.data.value)
+    const fetchPromises = asyncData.map(item => 
+        fetch(item.data.value)
             .then(res => res.json())
-            .then(res => ({...v, data: res}))
+            .then(res => ({...item, data: res}))
     );
     const fetchedResults = await Promise.allSettled(fetchPromises);
-    const settledData = fetchedResults.map((r, i) => 
-        r.status === 'fulfilled' ? r.value : {...asyncData[i], data: null}
-    );
+    const settledData = fetchedResults.map((result, index) => {
+        const original = asyncData[index];
+        return result.status === 'fulfilled' 
+            ? result.value 
+            : {...original, data: null};
+    });
 
     return Response.json({ data: [...plainData, ...settledData]})
     

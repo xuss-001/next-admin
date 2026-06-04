@@ -20,10 +20,14 @@ export default function Dashboard() {
   const sortableRef = useRef<Sortable | null>(null);
 
   useEffect(() => {
+    let rafId: number | null = null;
+    let isMounted = true;
+
     const initSortable = () => {
+        if (!isMounted) return;
         const container = document.querySelector('#dashboard') as HTMLElement;
         if (!container) {
-            requestAnimationFrame(initSortable);
+            rafId = requestAnimationFrame(initSortable);
             return;
         }
         sortableRef.current = new Sortable(container, {
@@ -34,6 +38,10 @@ export default function Dashboard() {
     initSortable();
 
     return () => {
+        isMounted = false;
+        if (rafId !== null) {
+            cancelAnimationFrame(rafId);
+        }
         if (sortableRef.current) {
             sortableRef.current.destroy();
             sortableRef.current = null;
