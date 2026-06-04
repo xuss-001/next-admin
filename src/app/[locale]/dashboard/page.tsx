@@ -47,7 +47,7 @@ export default function Dashboard() {
             <div className={styles.content} id='dashboard'>
                 {
                     boardList.map((v, i) => {
-                        return <div key={i} style={{width: v.w, height: v.h}} className={styles.card}> 
+                        return <div key={v.id} style={{width: v.w, height: v.h}} className={styles.card}>
                             <span className='moveBtn'><HolderOutlined /></span>
                             <Chart data={v.data} type={v.type} id={v.id} />
                          </div>
