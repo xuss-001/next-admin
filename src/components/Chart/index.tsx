@@ -9,25 +9,34 @@ interface IChart {
 }
 
 const MyChart = (props: IChart) => {
-    const chartRef = useRef<any>(null);
-    const { type, data, id } =props;
+    const chartRef = useRef<HTMLElement | null>(null);
+    const renderedRef = useRef(false);
+    const { type, data, id } = props;
+
     useEffect(() => {
-        let chart:any;
-        // 避免在开发环境渲染两次
-    if(isDev) {
-        let curCache = localStorage.getItem(id);
-        if(!curCache) {
-            localStorage.setItem(id, '1');
-            chart = createChart(chartRef.current, type, data);
-        } 
-    }else {
-        chart = createChart(chartRef.current, type, data);
-    }
-    return () => {
-        localStorage.removeItem(id);
-        chart && chart.destroy();
-    }
+        if (data === null || data === undefined) {
+            return;
+        }
+
+        let chart: any;
+        if (isDev) {
+            if (!renderedRef.current) {
+                renderedRef.current = true;
+                chart = createChart(chartRef.current!, type, data);
+            }
+        } else {
+            chart = createChart(chartRef.current!, type, data);
+        }
+
+        return () => {
+            chart && chart.destroy();
+        }
     }, [type, data, id]);
+
+    if (data === null || data === undefined) {
+        return <div ref={chartRef} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#999' }}>数据加载失败</div>;
+    }
+
     return <div ref={chartRef}></div>
 }
 
