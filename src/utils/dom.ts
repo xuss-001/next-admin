@@ -1,3 +1,5 @@
+const DANGEROUS_PROPERTIES = ['innerHTML', 'outerHTML', 'srcdoc', 'onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur', 'onchange', 'onsubmit', 'onkeydown', 'onkeyup', 'onkeypress'];
+
 /**
  * 创建元素工具函数
  *
@@ -6,7 +8,7 @@
  * @param  {object} attributes        - any attributes
  * @returns {Element}
  */
-export function make(tagName: keyof HTMLElementTagNameMap, classNames?: string | null | string[], attributes: any = {}) {
+export function make(tagName: keyof HTMLElementTagNameMap, classNames?: string | null | string[], attributes: Record<string, string> = {}) {
   const el = document.createElement(tagName);
 
   if (Array.isArray(classNames)) {
@@ -16,8 +18,16 @@ export function make(tagName: keyof HTMLElementTagNameMap, classNames?: string |
   }
 
   for (const attrName in attributes) {
-    // @ts-ignore
-    el[attrName] = attributes[attrName];
+    if (DANGEROUS_PROPERTIES.includes(attrName.toLowerCase())) {
+      console.warn(`[dom.make] Property "${attrName}" is not allowed for security reasons`);
+      continue;
+    }
+    
+    if (attrName === 'textContent') {
+      el.textContent = attributes[attrName];
+    } else {
+      el.setAttribute(attrName, attributes[attrName]);
+    }
   }
 
   return el;
@@ -25,8 +35,8 @@ export function make(tagName: keyof HTMLElementTagNameMap, classNames?: string |
 
 export function makeModal(contentId?: string, visible = false, onOk?: () => void) {
   const wrap = make('div', 'cx-common-modal');
-  const cancelBtn = make('span', 'cx-commom-modal-cancel', {innerHTML: '取消'});
-  const saveBtn = make('span', 'cx-commom-modal-save', {innerHTML: '保存'});
+  const cancelBtn = make('span', 'cx-commom-modal-cancel', {textContent: '取消'});
+  const saveBtn = make('span', 'cx-commom-modal-save', {textContent: '保存'});
   const content = make('div', 'cx-commom-modal-content', {id: contentId});
   wrap.append(content, saveBtn, cancelBtn);
 
@@ -45,16 +55,20 @@ export function makeModal(contentId?: string, visible = false, onOk?: () => void
 }
 
 export const hideElementById = (id: string) => {
-  // 隐藏滑块
   const block = document.querySelector(`#${id}`) as HTMLElement;
-  block.style.display = 'none';
-  return
+  if (block) {
+    block.style.display = 'none';
+  }
 }
 
-export function makeFragment(htmlString: string) {
+export function makeFragment(htmlString: string, isTrustedHTML = false) {
   const tempDiv = document.createElement('div');
-
-  tempDiv.innerHTML = htmlString.trim();
+  
+  if (isTrustedHTML) {
+    tempDiv.innerHTML = htmlString.trim();
+  } else {
+    tempDiv.textContent = htmlString;
+  }
 
   const fragment = document.createDocumentFragment();
 

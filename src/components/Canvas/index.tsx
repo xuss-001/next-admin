@@ -243,10 +243,11 @@ export default function Canvas(props: IProps) {
     }
 
     const handleDragover = (event) => {
-        // 阻止默认行为以允许放置
         event.preventDefault();
         const curItem = memoryManage.get('curDragItem') || {};
-        const block = document.querySelector('#cube_holder_block');
+        const block = document.querySelector('#cube_holder_block') as HTMLElement;
+        if (!block) return;
+        
         const size = {width: curItem.width || 100, height: curItem.height || 100};
         if(block.style.display !== 'inline-block') {
             block.style.display = 'inline-block';

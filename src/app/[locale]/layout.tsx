@@ -16,20 +16,25 @@ type Props = {
 export async function generateMetadata({
   params: {locale}
 }: Omit<Props, 'children'>): Promise<Metadata> {
-  const t = await getTranslations({locale, namespace: 'index'});
+  try {
+    const t = await getTranslations({locale, namespace: 'index'});
 
-  return {
-    // metadataBase: new URL('http://localhost:3000'),
-    title: t('title'),
-    description: t('desc'),
-  };
+    return {
+      title: t('title'),
+      description: t('desc'),
+    };
+  } catch (error) {
+    console.error(`Failed to load translations for locale "${locale}":`, error);
+    return {
+      title: 'Next-Admin',
+      description: 'Admin Dashboard',
+    };
+  }
 }
 
 export default function BasicLayout({children, params: {locale}}: Readonly<Props>) {
   return (
     <html lang={locale}>
-      <head>
-      </head>
       <body className={inter.className}>
         <AntdRegistry>{children}</AntdRegistry>
       </body>
