@@ -31,7 +31,13 @@ instance.interceptors.request.use(function (config) {
             case 500:
               message.error(error.response.data?.msg || '服务器内部错误');
               break;
+            default:
+              message.error(error.response.data?.msg || `请求失败 (${error.response.status})`);
         }
+    } else if (error && error.request) {
+        message.error('网络错误，请检查网络连接');
+    } else {
+        message.error(error?.message || '请求失败');
     }
     return Promise.reject(error);
   });
