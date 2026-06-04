@@ -2,7 +2,7 @@
 import { useTranslations} from 'next-intl';
 import { Button, Form, Input, Segmented, message, type FormProps } from 'antd';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/navigation';
 import { loginApi, registerApi } from './api';
 
 import styles from './index.module.less';
