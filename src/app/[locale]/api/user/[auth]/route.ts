@@ -8,28 +8,30 @@ export async function POST(
     request: Request,
     { params: { auth } }: { params: { auth: string } }
   ) {
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      console.error('JWT_SECRET environment variable is not set');
+      return NextResponse.json({ data: null, msg: '服务器配置错误' }, { status: 500 });
+    }
+
     const { email, pwd } = await request.json();
 
-    // 加密后的密文密码，建议前端传输时也进行加密，后端来解密
     const en_pwd = encrypt(pwd);
 
-     // 存储用户信息
      let info = {
       email,
-      // 其他加密key
       role: 1
     }
 
     const token = jsonwebtoken.sign(
         info,
-        process.env.JWT_SECRET || '',
+        jwtSecret,
         { expiresIn: '3d' }
     );
     
-    // 设置token过期时间
     const oneDay = 3 * 24 * 60 * 60 * 1000;
-    // 将token设置到session中，请求中就不需要手动设置token参数
-    cookies().set('token', token, { httpOnly: true, expires: Date.now() + oneDay })
+    const cookieStore = await cookies();
+    cookieStore.set('token', token, { httpOnly: true, expires: Date.now() + oneDay })
 
     if(auth === 'login') {
       return NextResponse.json({data: { email, pwd: en_pwd }, msg: '登录成功'})
@@ -39,4 +41,5 @@ export async function POST(
       return NextResponse.json({data: { email, pwd: en_pwd }, msg: '注册成功'})
     }
     
+    return NextResponse.json({ data: null, msg: '无效的请求' }, { status: 400 });
 }

@@ -13,7 +13,7 @@ instance.interceptors.request.use(function (config) {
   });
 
   instance.interceptors.response.use(function (response) {
-    if(response.data.msg) {
+    if(response.data?.msg) {
       message.success(response.data.msg)
     }
     return response.data;
@@ -21,11 +21,16 @@ instance.interceptors.request.use(function (config) {
     if(error && error.response) {
         switch(error.response.status) {
             case 401:
-                // 客户端环境
-                window && (location.href = '/user/login');
+                if (typeof window !== 'undefined') {
+                  const pathname = window.location.pathname;
+                  const segments = pathname.split('/').filter(Boolean);
+                  const locale = segments[0] && ['en', 'zh'].includes(segments[0]) ? segments[0] : 'zh';
+                  window.location.href = `/${locale}/user/login`;
+                }
+                break;
             case 500:
-              message.error(error.response.data.msg)
-
+              message.error(error.response.data?.msg || '服务器内部错误');
+              break;
         }
     }
     return Promise.reject(error);

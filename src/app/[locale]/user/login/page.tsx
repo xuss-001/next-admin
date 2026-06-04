@@ -1,6 +1,6 @@
 'use client'
 import { useTranslations} from 'next-intl';
-import { Button, Form, Input, Segmented, type FormProps } from 'antd';
+import { Button, Form, Input, Segmented, message, type FormProps } from 'antd';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { loginApi, registerApi } from './api';
@@ -26,8 +26,9 @@ export default function Home() {
     if(curMode === mode[0]) {
       const { email, pwd } = values;
       loginApi(email, pwd).then(res => {
-        // login logic
         router.push('/dashboard');
+      }).catch(err => {
+        message.error(err?.response?.data?.msg || err?.message || '登录失败，请稍后重试');
       })
       return
     }
@@ -35,8 +36,9 @@ export default function Home() {
     if(curMode === mode[1]) {
       const { email, pwd } = values;
       registerApi(email, pwd).then(res => {
-        // register logic
         router.push('/dashboard');
+      }).catch(err => {
+        message.error(err?.response?.data?.msg || err?.message || '注册失败，请稍后重试');
       })
     }
     
